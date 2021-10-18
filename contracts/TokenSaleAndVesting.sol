@@ -13,7 +13,6 @@ contract TokenSaleAndVesting is Context, Ownable {
   IERC20 _paymentToken;
   address payable _foundationAddress;
   uint256 _rate;
-  uint256 _startTime;
   uint256 _endTime;
   uint256 _daysBeforeWithdrawal;
   uint256 _totalVested;
@@ -44,7 +43,6 @@ contract TokenSaleAndVesting is Context, Ownable {
     onlyFoundationAddress
   {
     uint256 _time = block.timestamp;
-    _startTime = _time;
     _endTime = _time + (_daysToLast * 1 days);
     _daysBeforeWithdrawal = (daysBeforeWithdrawal_ * 1 days);
     _started = true;
