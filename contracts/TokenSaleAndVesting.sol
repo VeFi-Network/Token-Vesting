@@ -94,6 +94,11 @@ contract TokenSaleAndVesting is Context, Ownable {
     );
   }
 
+  function withdrawBNB() external onlyFoundationAddress {
+    uint256 _balance = address(this).balance;
+    _foundationAddress.transfer(_balance);
+  }
+
   receive() external payable {
     buyAndVest();
   }
