@@ -28,6 +28,12 @@ contract TokenSaleAndVesting is Context, Ownable {
     _;
   }
 
+  event TokenSaleStarted(uint256 _startTime);
+  event TokenSaleExtended(uint256 _extension);
+  event TokensBoughtAndVested(uint256 _vested, uint256 _totalVesting);
+  event TokensWithdrawn(uint256 _amount, uint256 _inVesting);
+  event RateChanged(uint256 _newRate);
+
   constructor(
     address paymentToken_,
     uint256 rate_,
@@ -38,6 +44,10 @@ contract TokenSaleAndVesting is Context, Ownable {
     _foundationAddress = foundationAddress_;
   }
 
+  /** @dev Start the token sale. Can only be called by the foundation
+   *  @param _daysToLast The number of days the token sale should last
+   *  @param daysBeforeWithdrawal_ The number of days before tokens can be withdrawn after vesting
+   */
   function startSale(uint256 _daysToLast, uint256 daysBeforeWithdrawal_)
     external
     onlyFoundationAddress
@@ -46,8 +56,12 @@ contract TokenSaleAndVesting is Context, Ownable {
     _endTime = _time + (_daysToLast * 1 days);
     _daysBeforeWithdrawal = (daysBeforeWithdrawal_ * 1 days);
     _started = true;
+    emit TokenSaleStarted(_time);
   }
 
+  /** @dev Extend the token sale
+   *  @param _daysToExtendSaleBy The number of days to extend the end date by
+   */
   function extendSale(uint256 _daysToExtendSaleBy)
     external
     onlyFoundationAddress
@@ -57,8 +71,12 @@ contract TokenSaleAndVesting is Context, Ownable {
       "VeFiTokenVest: Sale must be started before the end date can be extended"
     );
     _endTime = _endTime + (_daysToExtendSaleBy * 1 days);
+
+    emit TokenSaleExtended(_daysToExtendSaleBy);
   }
 
+  /** @dev Function to be called by intending vestor. Amount of BNB to spend is sent to this function
+   */
   function buyAndVest() public payable {
     uint256 _currentTime = block.timestamp;
 
@@ -79,11 +97,20 @@ contract TokenSaleAndVesting is Context, Ownable {
       _vestable;
     vestingDetail._withdrawalTime = block.timestamp + _daysBeforeWithdrawal;
     _totalVested = _totalVested + _vestable;
+
+    emit TokensBoughtAndVested(vestingDetail._withdrawalAmount, _totalVested);
   }
 
+  /** @dev Withdrawal function. Can only be called after vesting period has elapsed
+   */
   function withdraw() external {
     VestingDetail storage vestingDetail = _vestingDetails[_msgSender()];
 
+    require(
+      (block.timestamp >= vestingDetail._withdrawalTime) &&
+        (vestingDetail._withdrawalTime != 0),
+      "VeFiTokenVest: It is not time for withdrawal"
+    );
     require(
       _paymentToken.balanceOf(address(this)) >= vestingDetail._withdrawalAmount,
       "VeFiTokenVest: Not enough tokens to sell. Please reach out to the foundation concerning this"
@@ -92,11 +119,61 @@ contract TokenSaleAndVesting is Context, Ownable {
       _paymentToken.transfer(_msgSender(), vestingDetail._withdrawalAmount),
       "VeFiTokenVest: Could not transfer tokens"
     );
+
+    uint256 _withdrawn = vestingDetail._withdrawalAmount;
+
+    vestingDetail._withdrawalAmount = 0;
+    vestingDetail._withdrawalTime = 0;
+    _totalVested = _totalVested - _withdrawn;
+
+    emit TokensWithdrawn(_withdrawn, _totalVested);
   }
 
+  /** @dev Function to withdraw BNB deposited during sale. Can only be called by the foundation
+   */
   function withdrawBNB() external onlyFoundationAddress {
     uint256 _balance = address(this).balance;
     _foundationAddress.transfer(_balance);
+  }
+
+  /** @dev Function to withdraw left-over tokens. Can only be called by the foundation and after the sale has ended.
+   */
+  function withdrawLeftOverTokens() external onlyFoundationAddress {
+    require(
+      block.timestamp >= _endTime,
+      "VeFiTokenVest: Left over tokens can only be withdrawn after sale"
+    );
+    require(
+      _paymentToken.balanceOf(address(this)) > 0,
+      "VeFiTokenVest: No left over tokens to withdraw"
+    );
+    require(
+      _paymentToken.transfer(
+        _foundationAddress,
+        _paymentToken.balanceOf(address(this))
+      ),
+      "VeFiTokenVest: Could not withdraw left over tokens"
+    );
+  }
+
+  /** @dev Set the rate for the sale
+   *  @param rate_ The rate to be set
+   */
+  function setRate(uint256 rate_) external onlyFoundationAddress {
+    require(rate_ > 0, "VeFiTokenVest: Rate must be greater than 0");
+    _rate = rate_;
+
+    emit RateChanged(_rate);
+  }
+
+  /** @dev Get the remaining time for sale
+   */
+  function getRemainingTime() public view returns (uint256) {
+    uint256 _currentTime = block.timestamp;
+
+    if (_endTime < _currentTime) return 0;
+
+    return _endTime - _currentTime;
   }
 
   receive() external payable {
