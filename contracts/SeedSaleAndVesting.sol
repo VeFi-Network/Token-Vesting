@@ -18,7 +18,6 @@ contract SeedSaleAndVesting is Context, Ownable {
   uint256 _daysBeforeWithdrawal;
   uint256 _totalVested;
   bool _started;
-  uint256 _cliff;
 
   mapping(address => VestingDetail) _vestingDetails;
 
@@ -57,7 +56,6 @@ contract SeedSaleAndVesting is Context, Ownable {
     uint256 _time = block.timestamp;
     _endTime = _time + (_daysToLast * 1 days);
     _daysBeforeWithdrawal = (daysBeforeWithdrawal_ * 1 days);
-    _cliff = _time + (60 * 1 days);
     _started = true;
     emit TokenSaleStarted(_time);
   }
@@ -108,6 +106,7 @@ contract SeedSaleAndVesting is Context, Ownable {
   /** @dev Withdrawal function. Can only be called after vesting period has elapsed
    */
   function withdraw() external {
+    uint256 _cliff = _endTime + (60 * 1 days);
     require(
       block.timestamp > _cliff,
       "VeFiTokenVest: Token withdrawal before 2 month cliff"
