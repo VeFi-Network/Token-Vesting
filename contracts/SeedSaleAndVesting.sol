@@ -191,6 +191,20 @@ contract SeedSaleAndVesting is Context, Ownable {
     emit RateChanged(_rate);
   }
 
+  /** @dev Set foundation address. Can only be called by contract owner
+   *  @param foundationAddress_ address to set
+   */
+  function setFoundationAddress(address payable foundationAddress_)
+    external
+    onlyOwner
+  {
+    require(
+      foundationAddress_ != address(0),
+      "VeFiTokenVest: Set zero address as foundation address"
+    );
+    _foundationAddress = foundationAddress_;
+  }
+
   /** @dev Get the remaining time for sale
    */
   function getRemainingTime() public view returns (uint256) {
