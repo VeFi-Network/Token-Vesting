@@ -8,6 +8,7 @@ contract SeedSaleAndVesting is Context, Ownable {
   struct VestingDetail {
     uint256 _withdrawalTime;
     uint256 _withdrawalAmount;
+    uint256 _lockDuration;
   }
 
   IERC20 _paymentToken;
@@ -17,6 +18,7 @@ contract SeedSaleAndVesting is Context, Ownable {
   uint256 _daysBeforeWithdrawal;
   uint256 _totalVested;
   bool _started;
+  uint256 _cliff;
 
   mapping(address => VestingDetail) _vestingDetails;
 
@@ -55,6 +57,7 @@ contract SeedSaleAndVesting is Context, Ownable {
     uint256 _time = block.timestamp;
     _endTime = _time + (_daysToLast * 1 days);
     _daysBeforeWithdrawal = (daysBeforeWithdrawal_ * 1 days);
+    _cliff = _time + (60 * 1 days);
     _started = true;
     emit TokenSaleStarted(_time);
   }
@@ -96,6 +99,7 @@ contract SeedSaleAndVesting is Context, Ownable {
       vestingDetail._withdrawalAmount +
       _vestable;
     vestingDetail._withdrawalTime = block.timestamp + _daysBeforeWithdrawal;
+    vestingDetail._lockDuration = block.timestamp + (2 * (365 * 1 days));
     _totalVested = _totalVested + _vestable;
 
     emit TokensBoughtAndVested(vestingDetail._withdrawalAmount, _totalVested);
@@ -104,10 +108,14 @@ contract SeedSaleAndVesting is Context, Ownable {
   /** @dev Withdrawal function. Can only be called after vesting period has elapsed
    */
   function withdraw() external {
+    require(
+      block.timestamp >= _cliff,
+      "VeFiTokenVest: Token withdrawal before 2 month cliff"
+    );
     VestingDetail storage vestingDetail = _vestingDetails[_msgSender()];
     uint256 _withdrawable;
 
-    if (block.timestamp >= _endTime) {
+    if (block.timestamp >= vestingDetail._lockDuration) {
       _withdrawable = vestingDetail._withdrawalAmount;
     } else if (block.timestamp < _endTime) {
       _withdrawable = (vestingDetail._withdrawalAmount * 5) / 100;
