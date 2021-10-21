@@ -114,15 +114,19 @@ contract SeedSaleAndVesting is Context, Ownable {
     VestingDetail storage vestingDetail = _vestingDetails[_msgSender()];
     uint256 _withdrawable;
 
+    require(
+      vestingDetail._withdrawalTime != 0,
+      "VeFiTokenVest: Withdrawal not possible"
+    );
+
     if (block.timestamp >= vestingDetail._lockDuration) {
       _withdrawable = vestingDetail._withdrawalAmount;
-    } else if (block.timestamp < _endTime) {
+    } else if (block.timestamp < vestingDetail._lockDuration) {
       _withdrawable = (vestingDetail._withdrawalAmount * 5) / 100;
     }
 
     require(
-      (block.timestamp >= vestingDetail._withdrawalTime) &&
-        (vestingDetail._withdrawalTime != 0),
+      (block.timestamp >= vestingDetail._withdrawalTime),
       "VeFiTokenVest: It is not time for withdrawal"
     );
     require(
@@ -137,9 +141,14 @@ contract SeedSaleAndVesting is Context, Ownable {
     vestingDetail._withdrawalAmount =
       vestingDetail._withdrawalAmount -
       _withdrawable;
-    vestingDetail._withdrawalTime = block.timestamp >= _endTime
-      ? 0
-      : block.timestamp + _daysBeforeWithdrawal;
+    vestingDetail._withdrawalTime = block.timestamp <
+      vestingDetail._lockDuration
+      ? block.timestamp + _daysBeforeWithdrawal
+      : 0;
+
+    if (block.timestamp >= vestingDetail._lockDuration)
+      vestingDetail._lockDuration = 0;
+
     _totalVested = _totalVested - _withdrawable;
 
     emit TokensWithdrawn(_withdrawable, _totalVested);
