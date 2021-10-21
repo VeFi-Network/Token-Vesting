@@ -109,7 +109,7 @@ contract SeedSaleAndVesting is Context, Ownable {
    */
   function withdraw() external {
     require(
-      block.timestamp >= _cliff,
+      block.timestamp > _cliff,
       "VeFiTokenVest: Token withdrawal before 2 month cliff"
     );
     VestingDetail storage vestingDetail = _vestingDetails[_msgSender()];
