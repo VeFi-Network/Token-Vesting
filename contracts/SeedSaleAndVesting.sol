@@ -4,7 +4,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
-contract TokenSaleAndVesting is Context, Ownable {
+contract SeedSaleAndVesting is Context, Ownable {
   struct VestingDetail {
     uint256 _withdrawalTime;
     uint256 _withdrawalAmount;
@@ -105,6 +105,13 @@ contract TokenSaleAndVesting is Context, Ownable {
    */
   function withdraw() external {
     VestingDetail storage vestingDetail = _vestingDetails[_msgSender()];
+    uint256 _withdrawable;
+
+    if (block.timestamp >= _endTime) {
+      _withdrawable = vestingDetail._withdrawalAmount;
+    } else if (block.timestamp < _endTime) {
+      _withdrawable = (vestingDetail._withdrawalAmount * 5) / 100;
+    }
 
     require(
       (block.timestamp >= vestingDetail._withdrawalTime) &&
@@ -112,21 +119,23 @@ contract TokenSaleAndVesting is Context, Ownable {
       "VeFiTokenVest: It is not time for withdrawal"
     );
     require(
-      _paymentToken.balanceOf(address(this)) >= vestingDetail._withdrawalAmount,
+      _paymentToken.balanceOf(address(this)) >= _withdrawable,
       "VeFiTokenVest: Not enough tokens to sell. Please reach out to the foundation concerning this"
     );
     require(
-      _paymentToken.transfer(_msgSender(), vestingDetail._withdrawalAmount),
+      _paymentToken.transfer(_msgSender(), _withdrawable),
       "VeFiTokenVest: Could not transfer tokens"
     );
 
-    uint256 _withdrawn = vestingDetail._withdrawalAmount;
+    vestingDetail._withdrawalAmount =
+      vestingDetail._withdrawalAmount -
+      _withdrawable;
+    vestingDetail._withdrawalTime = block.timestamp >= _endTime
+      ? 0
+      : block.timestamp + _daysBeforeWithdrawal;
+    _totalVested = _totalVested - _withdrawable;
 
-    vestingDetail._withdrawalAmount = 0;
-    vestingDetail._withdrawalTime = 0;
-    _totalVested = _totalVested - _withdrawn;
-
-    emit TokensWithdrawn(_withdrawn, _totalVested);
+    emit TokensWithdrawn(_withdrawable, _totalVested);
   }
 
   /** @dev Function to withdraw BNB deposited during sale. Can only be called by the foundation
