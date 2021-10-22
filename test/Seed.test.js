@@ -1,5 +1,4 @@
 const { expectRevert, time } = require("@openzeppelin/test-helpers");
-const { web3 } = require("@openzeppelin/test-helpers/src/setup");
 const BigNumber = web3.BigNumber;
 const MockToken = artifacts.require("MockToken");
 const SeedSaleAndVesting = artifacts.require("SeedSaleAndVesting");
