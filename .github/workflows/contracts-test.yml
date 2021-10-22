@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: ${{ matrix.version }}
       - run: npm install
-      - run: npm install --global solcjs
+      - run: npm install --global solc
       - run: npm install --global ganache-cli
       - run: npm install --global truffle
       - run: ganache-cli --quiet
