@@ -15,11 +15,10 @@ contract("SeedSaleAndVesting", accounts => {
   const saleEndTime = 10;
   const withdrawalTime = 30;
 
-  const [beneficiary1, beneficiary2, beneficiary3, beneficiary4] = [
+  const [beneficiary1, beneficiary2, beneficiary3] = [
     accounts[0],
     accounts[1],
-    accounts[3],
-    accounts[4]
+    accounts[3]
   ];
 
   before(async () => {
@@ -81,15 +80,51 @@ contract("SeedSaleAndVesting", accounts => {
     await seedSale.withdraw({ from: beneficiary3 });
     const newWithdrawalAmount = (await seedSale.getVestingDetail(beneficiary3))
       ._withdrawalAmount;
-    assert.equal(
+    assert.isTrue(
       new BN.BigNumber(newWithdrawalAmount).isEqualTo(
         new BN.BigNumber(currentWithdrawalAmount).minus(
-          new BN.BigNumber(currentWithdrawalAmount)
-            .multipliedBy(new BN.BigNumber(5))
-            .dividedBy(new BN.BigNumber(100))
+          await token.balanceOf(beneficiary3)
         )
-      ),
-      true
+      )
+    );
+  });
+
+  it("should throw error if address tries to withdraw before withdrawal time", async () => {
+    await expectRevert(
+      seedSale.withdraw({ from: beneficiary3 }),
+      "VeFiTokenVest: It is not time for withdrawal"
+    );
+  });
+
+  it("should only allow foundation address to withdraw BNB", async () => {
+    await expectRevert(
+      seedSale.withdrawBNB({ from: beneficiary3 }),
+      "VeFiTokenVest: Only foundation address can call this function"
+    );
+  });
+
+  it("should allow foundation address to withdraw BNB", async () => {
+    const currentBalance = await web3.eth.getBalance(beneficiary2);
+    await seedSale.withdrawBNB({ from: beneficiary2 });
+    const newBalance = await web3.eth.getBalance(beneficiary2);
+    assert.isTrue(
+      new BN.BigNumber(newBalance).lt(new BN.BigNumber(currentBalance))
+    );
+  });
+
+  it("should allow only foundation address to withdraw left-over tokens", async () => {
+    await expectRevert(
+      seedSale.withdrawLeftOverTokens({ from: beneficiary3 }),
+      "VeFiTokenVest: Only foundation address can call this function"
+    );
+  });
+
+  it("should allow foundation address to withdraw left-over tokens", async () => {
+    const currentBalance = await token.balanceOf(beneficiary2);
+    await seedSale.withdrawLeftOverTokens({ from: beneficiary2 });
+    const newBalance = await token.balanceOf(beneficiary2);
+    assert.isTrue(
+      new BN.BigNumber(newBalance).gt(new BN.BigNumber(currentBalance))
     );
   });
 });

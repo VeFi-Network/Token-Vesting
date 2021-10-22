@@ -1,0 +1,21 @@
+name: contracts-test
+on:
+  pull_request:
+    branches:
+      - master
+jobs:
+  run-test:
+    name: run-test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x, 14.x, 15.x]
+    steps:
+      - uses: actions/checkout@v2
+      - name: install-nodejs
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.version }}
+      - run: npm install
+      - run: npm install --global truffle
+      - run: npm test
