@@ -20,5 +20,5 @@ jobs:
       - run: npm install --global solc
       - run: npm install --global ganache-cli
       - run: npm install --global truffle
-      - run: ganache-cli --quiet
+      - run: sudo nohup ganache-cli &
       - run: npm test
