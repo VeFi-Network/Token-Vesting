@@ -97,7 +97,7 @@ contract SeedSaleAndVesting is Context, Ownable {
       vestingDetail._withdrawalAmount +
       _vestable;
     vestingDetail._withdrawalTime = block.timestamp + _daysBeforeWithdrawal;
-    vestingDetail._lockDuration = block.timestamp + (2 * (365 * 1 days));
+    vestingDetail._lockDuration = block.timestamp + (2 * 365 days);
     _totalVested = _totalVested + _vestable;
 
     emit TokensBoughtAndVested(vestingDetail._withdrawalAmount, _totalVested);
@@ -121,7 +121,7 @@ contract SeedSaleAndVesting is Context, Ownable {
 
     if (block.timestamp >= vestingDetail._lockDuration) {
       _withdrawable = vestingDetail._withdrawalAmount;
-    } else if (block.timestamp < vestingDetail._lockDuration) {
+    } else {
       _withdrawable = (vestingDetail._withdrawalAmount * 5) / 100;
     }
 
