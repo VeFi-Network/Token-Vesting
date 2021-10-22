@@ -215,6 +215,17 @@ contract SeedSaleAndVesting is Context, Ownable {
     return _endTime - _currentTime;
   }
 
+  /** @dev Get vesting detail of address
+   *  @param _vestor Address for which to view vesting detail
+   */
+  function getVestingDetail(address _vestor)
+    external
+    view
+    returns (VestingDetail memory _detail)
+  {
+    return _vestingDetails[_vestor];
+  }
+
   receive() external payable {
     buyAndVest();
   }
