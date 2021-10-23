@@ -190,10 +190,9 @@ contract("PrivateSaleAndVesting", accounts => {
   });
 
   it("should allow foundation address to whitelist addresses", async () => {
-    await privateSale.whitelistForSale(
-      [beneficiary1, beneficiary3],
-      { from: beneficiary2 }
-    );
+    await privateSale.whitelistForSale([beneficiary1, beneficiary3], {
+      from: beneficiary2
+    });
   });
 
   it("should allow whitelisted address to buy and vest", async () => {
