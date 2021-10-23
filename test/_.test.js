@@ -2,6 +2,7 @@ const { expectRevert, time } = require("@openzeppelin/test-helpers");
 const BigNumber = web3.BigNumber;
 const MockToken = artifacts.require("MockToken");
 const SeedSaleAndVesting = artifacts.require("SeedSaleAndVesting");
+const PrivateSaleAndVesting = artifacts.require("PrivateSaleAndVesting");
 const BN = require("bignumber.js");
 
 require("chai")
@@ -126,5 +127,81 @@ contract("SeedSaleAndVesting", accounts => {
     assert.isTrue(
       new BN.BigNumber(newBalance).gt(new BN.BigNumber(currentBalance))
     );
+  });
+});
+
+contract("PrivateSaleAndVesting", accounts => {
+  let privateSale;
+  let token;
+  const saleEndTime = 10;
+  const withdrawalTime = 30;
+
+  const [beneficiary1, beneficiary2, beneficiary3] = [
+    accounts[0],
+    accounts[1],
+    accounts[3]
+  ];
+
+  before(async () => {
+    await time.advanceBlock();
+    token = await MockToken.new(
+      "MockToken",
+      "Mktk",
+      web3.utils.toWei("1000000")
+    );
+    privateSale = await PrivateSaleAndVesting.new(
+      token.address,
+      web3.utils.toWei("0.0002"),
+      beneficiary2
+    );
+    await token.transfer(privateSale.address, web3.utils.toWei("1000000"));
+  });
+
+  it("should have transferred 1000000 tokens to private sale contract", async () => {
+    const balance = await token.balanceOf(privateSale.address);
+    assert.equal(balance, web3.utils.toWei("1000000"));
+  });
+
+  it("should not permit random address to start sale", async () => {
+    await expectRevert(
+      privateSale.startSale(saleEndTime, withdrawalTime, {
+        from: beneficiary1
+      }),
+      "VeFiTokenVest: Only foundation address can call this function"
+    );
+  });
+
+  it("should permit only foundation address to start sale", async () => {
+    await privateSale.startSale(saleEndTime, withdrawalTime, {
+      from: beneficiary2
+    });
+    const remainingTime = await privateSale.getRemainingTime();
+    remainingTime.toString().should.be.bignumber.equal(60 * 60 * 24 * 10);
+  });
+
+  it("should allow only whitelisted addresses to buy and vest", async () => {
+    await expectRevert(
+      privateSale.buyAndVest({
+        from: beneficiary3,
+        value: web3.utils.toWei("0.000002")
+      }),
+      "VeFiTokenVest: Only whitelisted addresses can call this function"
+    );
+  });
+
+  it("should allow foundation address to whitelist addresses", async () => {
+    await privateSale.whitelistForSale(
+      [beneficiary1, beneficiary3],
+      { from: beneficiary2 }
+    );
+  });
+
+  it("should allow whitelisted address to buy and vest", async () => {
+    await privateSale.buyAndVest({
+      from: beneficiary3,
+      value: web3.utils.toWei("0.000002")
+    });
+    const vestingDetail = await privateSale.getVestingDetail(beneficiary3);
+    vestingDetail._withdrawalAmount.toString().should.be.bignumber.equal(1e16);
   });
 });

@@ -167,7 +167,7 @@ contract PrivateSaleAndVesting is Context, Ownable {
   /** @dev Function to whitelist addresses. Can only be called by foundation address
    *  @param _accounts The array of addresses to whitelist
    */
-  function whitelistForSale(address[] _accounts)
+  function whitelistForSale(address[] memory _accounts)
     external
     onlyFoundationAddress
     returns (bool)
