@@ -43,6 +43,7 @@ contract PrivateSaleAndVesting is Context, Ownable {
   event TokensBoughtAndVested(uint256 _vested, uint256 _totalVesting);
   event TokensWithdrawn(uint256 _amount, uint256 _inVesting);
   event RateChanged(uint256 _newRate);
+  event Whitelisted(address[] accounts_);
 
   constructor(
     address paymentToken_,
@@ -166,7 +167,7 @@ contract PrivateSaleAndVesting is Context, Ownable {
   /** @dev Function to whitelist addresses. Can only be called by foundation address
    *  @param _accounts The array of addresses to whitelist
    */
-  function whiteListForSale(address[] _accounts)
+  function whitelistForSale(address[] _accounts)
     external
     onlyFoundationAddress
     returns (bool)
@@ -178,6 +179,7 @@ contract PrivateSaleAndVesting is Context, Ownable {
       );
       _whiteListed[_accounts[i]] = true;
     }
+    emit Whitelisted(_accounts);
     return true;
   }
 
