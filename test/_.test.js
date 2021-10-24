@@ -13,6 +13,7 @@ require("chai")
 contract("SeedSaleAndVesting", accounts => {
   let seedSale;
   let token;
+  const daysBeforeStart = 21;
   const saleEndTime = 10;
   const withdrawalTime = 30;
 
@@ -44,20 +45,35 @@ contract("SeedSaleAndVesting", accounts => {
 
   it("should not permit random address to start sale", async () => {
     await expectRevert(
-      seedSale.startSale(saleEndTime, withdrawalTime, { from: beneficiary1 }),
+      seedSale.startSale(daysBeforeStart, saleEndTime, withdrawalTime, {
+        from: beneficiary1
+      }),
       "VeFiTokenVest: Only foundation address can call this function"
     );
   });
 
   it("should permit only foundation address to start sale", async () => {
-    await seedSale.startSale(saleEndTime, withdrawalTime, {
+    await seedSale.startSale(daysBeforeStart, saleEndTime, withdrawalTime, {
       from: beneficiary2
     });
     const remainingTime = await seedSale.getRemainingTime();
-    remainingTime.toString().should.be.bignumber.equal(60 * 60 * 24 * 10);
+    remainingTime
+      .toString()
+      .should.be.bignumber.equal(60 * 60 * 24 * (10 + 21));
+  });
+
+  it("should only permit to buy and vest after sale has been started", async () => {
+    await expectRevert(
+      seedSale.buyAndVest({
+        from: beneficiary3,
+        value: web3.utils.toWei("0.000002")
+      }),
+      "VeFiTokenVest: Sale not started yet"
+    );
   });
 
   it("should allow anyone to buy and vest", async () => {
+    await time.increase(time.duration.days(21));
     await seedSale.buyAndVest({
       from: beneficiary3,
       value: web3.utils.toWei("0.000002")
@@ -133,6 +149,7 @@ contract("SeedSaleAndVesting", accounts => {
 contract("PrivateSaleAndVesting", accounts => {
   let privateSale;
   let token;
+  const daysBeforeStart = 30;
   const saleEndTime = 10;
   const withdrawalTime = 30;
 
@@ -164,7 +181,7 @@ contract("PrivateSaleAndVesting", accounts => {
 
   it("should not permit random address to start sale", async () => {
     await expectRevert(
-      privateSale.startSale(saleEndTime, withdrawalTime, {
+      privateSale.startSale(daysBeforeStart, saleEndTime, withdrawalTime, {
         from: beneficiary1
       }),
       "VeFiTokenVest: Only foundation address can call this function"
@@ -172,14 +189,17 @@ contract("PrivateSaleAndVesting", accounts => {
   });
 
   it("should permit only foundation address to start sale", async () => {
-    await privateSale.startSale(saleEndTime, withdrawalTime, {
+    await privateSale.startSale(daysBeforeStart, saleEndTime, withdrawalTime, {
       from: beneficiary2
     });
     const remainingTime = await privateSale.getRemainingTime();
-    remainingTime.toString().should.be.bignumber.equal(60 * 60 * 24 * 10);
+    remainingTime
+      .toString()
+      .should.be.bignumber.equal(60 * 60 * 24 * (10 + 30));
   });
 
   it("should allow only whitelisted addresses to buy and vest", async () => {
+    await time.increase(time.duration.days(30));
     await expectRevert(
       privateSale.buyAndVest({
         from: beneficiary3,
