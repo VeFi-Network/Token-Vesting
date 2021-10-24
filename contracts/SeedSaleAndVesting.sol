@@ -14,10 +14,10 @@ contract SeedSaleAndVesting is Context, Ownable {
   IERC20 _paymentToken;
   address payable _foundationAddress;
   uint256 _rate;
+  uint256 _startTime;
   uint256 _endTime;
   uint256 _daysBeforeWithdrawal;
   uint256 _totalVested;
-  bool _started;
 
   mapping(address => VestingDetail) _vestingDetails;
 
@@ -49,12 +49,14 @@ contract SeedSaleAndVesting is Context, Ownable {
    *  @param _daysToLast The number of days the token sale should last
    *  @param daysBeforeWithdrawal_ The number of days before tokens can be withdrawn after vesting
    */
-  function startSale(uint256 _daysToLast, uint256 daysBeforeWithdrawal_)
-    external
-    onlyFoundationAddress
-  {
+  function startSale(
+    uint256 _daysBeforeStart,
+    uint256 _daysToLast,
+    uint256 daysBeforeWithdrawal_
+  ) external onlyFoundationAddress {
     uint256 _time = block.timestamp;
-    _endTime = _time + (_daysToLast * 1 days);
+    _startTime = _time + (_daysBeforeStart * 1 days);
+    _endTime = _startTime + (_daysToLast * 1 days);
     _daysBeforeWithdrawal = (daysBeforeWithdrawal_ * 1 days);
     _started = true;
     emit TokenSaleStarted(_time);
@@ -81,7 +83,7 @@ contract SeedSaleAndVesting is Context, Ownable {
   function buyAndVest() public payable {
     uint256 _currentTime = block.timestamp;
 
-    require(_started, "VeFiTokenVest: Sale not started yet");
+    require(_currentTime >= _startTime, "VeFiTokenVest: Sale not started yet");
     require(_endTime > _currentTime, "VeFiTokenVest: Sale has ended");
 
     address _vestor = _msgSender();
