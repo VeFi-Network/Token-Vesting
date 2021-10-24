@@ -18,6 +18,7 @@ contract SeedSaleAndVesting is Context, Ownable {
   uint256 _endTime;
   uint256 _daysBeforeWithdrawal;
   uint256 _totalVested;
+  bool _initialized;
 
   mapping(address => VestingDetail) _vestingDetails;
 
@@ -58,7 +59,7 @@ contract SeedSaleAndVesting is Context, Ownable {
     _startTime = _time + (_daysBeforeStart * 1 days);
     _endTime = _startTime + (_daysToLast * 1 days);
     _daysBeforeWithdrawal = (daysBeforeWithdrawal_ * 1 days);
-    _started = true;
+    _initialized = true;
     emit TokenSaleStarted(_time);
   }
 
@@ -70,7 +71,7 @@ contract SeedSaleAndVesting is Context, Ownable {
     onlyFoundationAddress
   {
     require(
-      _started,
+      block.timestamp >= _startTime,
       "VeFiTokenVest: Sale must be started before the end date can be extended"
     );
     _endTime = _endTime + (_daysToExtendSaleBy * 1 days);
@@ -207,7 +208,17 @@ contract SeedSaleAndVesting is Context, Ownable {
     _foundationAddress = foundationAddress_;
   }
 
-  /** @dev Get the remaining time for sale
+  /** @dev Get time remaining before sale starts
+   */
+  function getTimeBeforeStart() public view returns (uint256) {
+    uint256 _currentTime = block.timestamp;
+
+    if (_startTime < _currentTime) return 0;
+
+    return _startTime - _currentTime;
+  }
+
+  /** @dev Get time remaining before sale ends
    */
   function getRemainingTime() public view returns (uint256) {
     uint256 _currentTime = block.timestamp;
@@ -215,6 +226,12 @@ contract SeedSaleAndVesting is Context, Ownable {
     if (_endTime < _currentTime) return 0;
 
     return _endTime - _currentTime;
+  }
+
+  /** @dev Returns a boolean value indication whether the counter has been started or not
+   */
+  function isInitialized() external view returns (bool) {
+    return _initialized;
   }
 
   /** @dev Get vesting detail of address

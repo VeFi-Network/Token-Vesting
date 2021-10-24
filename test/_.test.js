@@ -57,7 +57,9 @@ contract("SeedSaleAndVesting", accounts => {
       from: beneficiary2
     });
     const remainingTime = await seedSale.getRemainingTime();
-    remainingTime.toString().should.be.bignumber.equal(60 * 60 * 24 * 10);
+    remainingTime
+      .toString()
+      .should.be.bignumber.equal(60 * 60 * 24 * (10 + 21));
   });
 
   it("should only permit to buy and vest after sale has been started", async () => {
@@ -191,7 +193,9 @@ contract("PrivateSaleAndVesting", accounts => {
       from: beneficiary2
     });
     const remainingTime = await privateSale.getRemainingTime();
-    remainingTime.toString().should.be.bignumber.equal(60 * 60 * 24 * 10);
+    remainingTime
+      .toString()
+      .should.be.bignumber.equal(60 * 60 * 24 * (10 + 30));
   });
 
   it("should allow only whitelisted addresses to buy and vest", async () => {
