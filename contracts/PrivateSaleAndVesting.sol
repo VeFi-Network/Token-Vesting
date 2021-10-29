@@ -274,6 +274,12 @@ contract PrivateSaleAndVesting is Context, Ownable {
     return _vestingDetails[_vestor];
   }
 
+  /** @dev Returns the presently set rate
+   */
+  function getRate() external view returns (uint256) {
+    return _rate;
+  }
+
   receive() external payable {
     buyAndVest();
   }
