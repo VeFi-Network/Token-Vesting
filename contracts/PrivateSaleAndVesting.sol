@@ -18,6 +18,7 @@ contract PrivateSaleAndVesting is Context, Ownable {
   uint256 _endTime;
   uint256 _daysBeforeWithdrawal;
   uint256 _totalVested;
+  uint256 _tokensBought;
   bool _initialized;
 
   mapping(address => VestingDetail) _vestingDetails;
@@ -41,7 +42,11 @@ contract PrivateSaleAndVesting is Context, Ownable {
 
   event TokenSaleStarted(uint256 _startTime);
   event TokenSaleExtended(uint256 _extension);
-  event TokensBoughtAndVested(uint256 _vested, uint256 _totalVesting);
+  event TokensBoughtAndVested(
+    address _vestedBy,
+    uint256 _vested,
+    uint256 _totalVesting
+  );
   event TokensWithdrawn(uint256 _amount, uint256 _inVesting);
   event RateChanged(uint256 _newRate);
   event Whitelisted(address[] accounts_);
@@ -112,8 +117,13 @@ contract PrivateSaleAndVesting is Context, Ownable {
     vestingDetail._withdrawalTime = block.timestamp + _daysBeforeWithdrawal;
     vestingDetail._lockDuration = block.timestamp + (2 * 365 days);
     _totalVested = _totalVested + _vestable;
+    _tokensBought = _tokensBought + _vestable;
 
-    emit TokensBoughtAndVested(vestingDetail._withdrawalAmount, _totalVested);
+    emit TokensBoughtAndVested(
+      _vestor,
+      vestingDetail._withdrawalAmount,
+      _totalVested
+    );
   }
 
   /** @dev Withdrawal function. Can only be called after vesting period has elapsed
@@ -272,6 +282,18 @@ contract PrivateSaleAndVesting is Context, Ownable {
     returns (VestingDetail memory _detail)
   {
     return _vestingDetails[_vestor];
+  }
+
+  /** @dev Returns the presently set rate
+   */
+  function getRate() external view returns (uint256) {
+    return _rate;
+  }
+
+  /** @dev Returns the amount of tokens bought
+   */
+  function getTokensBought() external view returns (uint256) {
+    return _tokensBought;
   }
 
   receive() external payable {
