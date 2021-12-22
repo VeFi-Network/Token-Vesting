@@ -115,7 +115,7 @@ contract PrivateSaleAndVesting is Context, Ownable {
       vestingDetail._withdrawalAmount +
       _vestable;
     vestingDetail._withdrawalTime = block.timestamp + _daysBeforeWithdrawal;
-    vestingDetail._lockDuration = block.timestamp + (2 * 365 days);
+    vestingDetail._lockDuration = block.timestamp + 365 days;
     _totalVested = _totalVested + _vestable;
     _tokensBought = _tokensBought + _vestable;
 
