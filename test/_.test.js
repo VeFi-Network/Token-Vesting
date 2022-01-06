@@ -1,16 +1,16 @@
-const { expectRevert, time } = require("@openzeppelin/test-helpers");
+const { expectRevert, time } = require('@openzeppelin/test-helpers');
 const BigNumber = web3.BigNumber;
-const MockToken = artifacts.require("MockToken");
-const SeedSaleAndVesting = artifacts.require("SeedSaleAndVesting");
-const PrivateSaleAndVesting = artifacts.require("PrivateSaleAndVesting");
-const BN = require("bignumber.js");
+const MockToken = artifacts.require('MockToken');
+const SeedSaleAndVesting = artifacts.require('SeedSaleAndVesting');
+const PrivateSaleAndVesting = artifacts.require('PrivateSaleAndVesting');
+const BN = require('bignumber.js');
 
-require("chai")
-  .use(require("chai-as-promised"))
-  .use(require("chai-bignumber")(BigNumber))
+require('chai')
+  .use(require('chai-as-promised'))
+  .use(require('chai-bignumber')(BigNumber))
   .should();
 
-contract("SeedSaleAndVesting", accounts => {
+contract('SeedSaleAndVesting', accounts => {
   let seedSale;
   let token;
   const daysBeforeStart = 21;
@@ -26,33 +26,33 @@ contract("SeedSaleAndVesting", accounts => {
   before(async () => {
     await time.advanceBlock();
     token = await MockToken.new(
-      "MockToken",
-      "Mktk",
-      web3.utils.toWei("1000000")
+      'MockToken',
+      'Mktk',
+      web3.utils.toWei('1000000')
     );
     seedSale = await SeedSaleAndVesting.new(
       token.address,
-      web3.utils.toWei("0.0002"),
+      web3.utils.toWei('0.0002'),
       beneficiary2
     );
-    await token.transfer(seedSale.address, web3.utils.toWei("1000000"));
+    await token.transfer(seedSale.address, web3.utils.toWei('1000000'));
   });
 
-  it("should have transferred 1000000 tokens to seed sale contract", async () => {
+  it('should have transferred 1000000 tokens to seed sale contract', async () => {
     const balance = await token.balanceOf(seedSale.address);
-    assert.equal(balance, web3.utils.toWei("1000000"));
+    assert.equal(balance, web3.utils.toWei('1000000'));
   });
 
-  it("should not permit random address to start sale", async () => {
+  it('should not permit random address to start sale', async () => {
     await expectRevert(
       seedSale.startSale(daysBeforeStart, saleEndTime, withdrawalTime, {
         from: beneficiary1
       }),
-      "VeFiTokenVest: Only foundation address can call this function"
+      'VeFiTokenVest: Only foundation address can call this function'
     );
   });
 
-  it("should permit only foundation address to start sale", async () => {
+  it('should permit only foundation address to start sale', async () => {
     await seedSale.startSale(daysBeforeStart, saleEndTime, withdrawalTime, {
       from: beneficiary2
     });
@@ -62,34 +62,34 @@ contract("SeedSaleAndVesting", accounts => {
       .should.be.bignumber.equal(60 * 60 * 24 * (10 + 21));
   });
 
-  it("should only permit to buy and vest after sale has been started", async () => {
+  it('should only permit to buy and vest after sale has been started', async () => {
     await expectRevert(
       seedSale.buyAndVest({
         from: beneficiary3,
-        value: web3.utils.toWei("0.000002")
+        value: web3.utils.toWei('0.000002')
       }),
-      "VeFiTokenVest: Sale not started yet"
+      'VeFiTokenVest: Sale not started yet'
     );
   });
 
-  it("should allow anyone to buy and vest", async () => {
+  it('should allow anyone to buy and vest', async () => {
     await time.increase(time.duration.days(21));
     await seedSale.buyAndVest({
       from: beneficiary3,
-      value: web3.utils.toWei("0.000002")
+      value: web3.utils.toWei('0.000002')
     });
     const vestingDetail = await seedSale.getVestingDetail(beneficiary3);
     vestingDetail._withdrawalAmount.toString().should.be.bignumber.equal(1e16);
   });
 
-  it("should not allow withdrawal before 2 month cliff", async () => {
+  it('should not allow withdrawal before 2 month cliff', async () => {
     await expectRevert(
       seedSale.withdraw({ from: beneficiary3 }),
-      "VeFiTokenVest: Token withdrawal before 2 month cliff"
+      'VeFiTokenVest: Token withdrawal before 2 month cliff'
     );
   });
 
-  it("should withdraw 5%", async () => {
+  it('should withdraw 5%', async () => {
     const currentWithdrawalAmount = (
       await seedSale.getVestingDetail(beneficiary3)
     )._withdrawalAmount;
@@ -106,21 +106,21 @@ contract("SeedSaleAndVesting", accounts => {
     );
   });
 
-  it("should throw error if address tries to withdraw before withdrawal time", async () => {
+  it('should throw error if address tries to withdraw before withdrawal time', async () => {
     await expectRevert(
       seedSale.withdraw({ from: beneficiary3 }),
-      "VeFiTokenVest: It is not time for withdrawal"
+      'VeFiTokenVest: It is not time for withdrawal'
     );
   });
 
-  it("should only allow foundation address to withdraw BNB", async () => {
+  it('should only allow foundation address to withdraw BNB', async () => {
     await expectRevert(
       seedSale.withdrawBNB({ from: beneficiary3 }),
-      "VeFiTokenVest: Only foundation address can call this function"
+      'VeFiTokenVest: Only foundation address can call this function'
     );
   });
 
-  it("should allow foundation address to withdraw BNB", async () => {
+  it('should allow foundation address to withdraw BNB', async () => {
     const currentBalance = await web3.eth.getBalance(beneficiary2);
     await seedSale.withdrawBNB({ from: beneficiary2 });
     const newBalance = await web3.eth.getBalance(beneficiary2);
@@ -129,14 +129,14 @@ contract("SeedSaleAndVesting", accounts => {
     );
   });
 
-  it("should allow only foundation address to withdraw left-over tokens", async () => {
+  it('should allow only foundation address to withdraw left-over tokens', async () => {
     await expectRevert(
       seedSale.withdrawLeftOverTokens({ from: beneficiary3 }),
-      "VeFiTokenVest: Only foundation address can call this function"
+      'VeFiTokenVest: Only foundation address can call this function'
     );
   });
 
-  it("should allow foundation address to withdraw left-over tokens", async () => {
+  it('should allow foundation address to withdraw left-over tokens', async () => {
     const currentBalance = await token.balanceOf(beneficiary2);
     await seedSale.withdrawLeftOverTokens({ from: beneficiary2 });
     const newBalance = await token.balanceOf(beneficiary2);
@@ -146,7 +146,7 @@ contract("SeedSaleAndVesting", accounts => {
   });
 });
 
-contract("PrivateSaleAndVesting", accounts => {
+contract('PrivateSaleAndVesting', accounts => {
   let privateSale;
   let token;
   const daysBeforeStart = 30;
@@ -162,33 +162,33 @@ contract("PrivateSaleAndVesting", accounts => {
   before(async () => {
     await time.advanceBlock();
     token = await MockToken.new(
-      "MockToken",
-      "Mktk",
-      web3.utils.toWei("1000000")
+      'MockToken',
+      'Mktk',
+      web3.utils.toWei('1000000')
     );
     privateSale = await PrivateSaleAndVesting.new(
       token.address,
-      web3.utils.toWei("0.0002"),
+      web3.utils.toWei('0.0002'),
       beneficiary2
     );
-    await token.transfer(privateSale.address, web3.utils.toWei("1000000"));
+    await token.transfer(privateSale.address, web3.utils.toWei('1000000'));
   });
 
-  it("should have transferred 1000000 tokens to private sale contract", async () => {
+  it('should have transferred 1000000 tokens to private sale contract', async () => {
     const balance = await token.balanceOf(privateSale.address);
-    assert.equal(balance, web3.utils.toWei("1000000"));
+    assert.equal(balance, web3.utils.toWei('1000000'));
   });
 
-  it("should not permit random address to start sale", async () => {
+  it('should not permit random address to start sale', async () => {
     await expectRevert(
       privateSale.startSale(daysBeforeStart, saleEndTime, withdrawalTime, {
         from: beneficiary1
       }),
-      "VeFiTokenVest: Only foundation address can call this function"
+      'VeFiTokenVest: Only foundation address can call this function'
     );
   });
 
-  it("should permit only foundation address to start sale", async () => {
+  it('should permit only foundation address to start sale', async () => {
     await privateSale.startSale(daysBeforeStart, saleEndTime, withdrawalTime, {
       from: beneficiary2
     });
@@ -198,27 +198,27 @@ contract("PrivateSaleAndVesting", accounts => {
       .should.be.bignumber.equal(60 * 60 * 24 * (10 + 30));
   });
 
-  it("should allow only whitelisted addresses to buy and vest", async () => {
+  it('should allow only whitelisted addresses to buy and vest', async () => {
     await time.increase(time.duration.days(30));
     await expectRevert(
       privateSale.buyAndVest({
         from: beneficiary3,
-        value: web3.utils.toWei("0.000002")
+        value: web3.utils.toWei('0.000002')
       }),
-      "VeFiTokenVest: Only whitelisted addresses can call this function"
+      'VeFiTokenVest: Only whitelisted addresses can call this function'
     );
   });
 
-  it("should allow foundation address to whitelist addresses", async () => {
+  it('should allow foundation address to whitelist addresses', async () => {
     await privateSale.whitelistForSale([beneficiary1, beneficiary3], {
       from: beneficiary2
     });
   });
 
-  it("should allow whitelisted address to buy and vest", async () => {
+  it('should allow whitelisted address to buy and vest', async () => {
     await privateSale.buyAndVest({
       from: beneficiary3,
-      value: web3.utils.toWei("0.000002")
+      value: web3.utils.toWei('0.000002')
     });
     const vestingDetail = await privateSale.getVestingDetail(beneficiary3);
     vestingDetail._withdrawalAmount.toString().should.be.bignumber.equal(1e16);
