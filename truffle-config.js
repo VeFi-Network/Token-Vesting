@@ -42,9 +42,9 @@ module.exports = {
     // options below to some value.
     //
     development: {
-      host: "127.0.0.1",
+      host: '127.0.0.1',
       port: 8545,
-      network_id: "*"
+      network_id: '*'
     }
     // Another network with more advanced options...
     // advanced: {
@@ -81,7 +81,7 @@ module.exports = {
   // Configure your compilers
   compilers: {
     solc: {
-      version: "0.8.10"
+      version: '0.8.10'
     }
   }
 

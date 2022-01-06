@@ -1,8 +1,8 @@
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/utils/Context.sol';
 
 contract PrivateSaleAndVesting is Context, Ownable {
   struct VestingDetail {
@@ -27,7 +27,7 @@ contract PrivateSaleAndVesting is Context, Ownable {
   modifier onlyFoundationAddress() {
     require(
       _msgSender() == _foundationAddress,
-      "VeFiTokenVest: Only foundation address can call this function"
+      'VeFiTokenVest: Only foundation address can call this function'
     );
     _;
   }
@@ -35,7 +35,7 @@ contract PrivateSaleAndVesting is Context, Ownable {
   modifier onlyWhiteListed() {
     require(
       _whiteListed[_msgSender()],
-      "VeFiTokenVest: Only whitelisted addresses can call this function"
+      'VeFiTokenVest: Only whitelisted addresses can call this function'
     );
     _;
   }
@@ -87,9 +87,12 @@ contract PrivateSaleAndVesting is Context, Ownable {
   {
     require(
       block.timestamp >= _startTime,
-      "VeFiTokenVest: Sale must be started before the end date can be extended"
+      'VeFiTokenVest: Sale must be started before the end date can be extended'
     );
-    _endTime = _endTime + (_daysToExtendSaleBy * 1 days);
+
+    if (_endTime < block.timestamp)
+      _endTime = block.timestamp + (_daysToExtendSaleBy * 1 days);
+    else _endTime = _endTime + (_daysToExtendSaleBy * 1 days);
 
     emit TokenSaleExtended(_daysToExtendSaleBy);
   }
@@ -99,15 +102,18 @@ contract PrivateSaleAndVesting is Context, Ownable {
   function buyAndVest() public payable onlyWhiteListed {
     uint256 _currentTime = block.timestamp;
 
-    require(_currentTime >= _startTime, "VeFiTokenVest: Sale not started yet");
-    require(_endTime > _currentTime, "VeFiTokenVest: Sale has ended");
+    require(
+      _startTime != 0 && _currentTime >= _startTime,
+      'VeFiTokenVest: Sale not started yet'
+    );
+    require(_endTime > _currentTime, 'VeFiTokenVest: Sale has ended');
 
     address _vestor = _msgSender();
     uint256 _vestable = (msg.value * 10**18) / _rate;
 
     require(
       (_totalVested + _vestable) <= _paymentToken.balanceOf(address(this)),
-      "VeFiTokenVest: Cannot buy and vest as allocation is not enough"
+      'VeFiTokenVest: Cannot buy and vest as allocation is not enough'
     );
 
     VestingDetail storage vestingDetail = _vestingDetails[_vestor];
@@ -132,14 +138,14 @@ contract PrivateSaleAndVesting is Context, Ownable {
     uint256 _cliff = _endTime + (60 * 1 days);
     require(
       block.timestamp > _cliff,
-      "VeFiTokenVest: Token withdrawal before 2 month cliff"
+      'VeFiTokenVest: Token withdrawal before 2 month cliff'
     );
     VestingDetail storage vestingDetail = _vestingDetails[_msgSender()];
     uint256 _withdrawable;
 
     require(
       vestingDetail._withdrawalTime != 0,
-      "VeFiTokenVest: Withdrawal not possible"
+      'VeFiTokenVest: Withdrawal not possible'
     );
 
     if (block.timestamp >= vestingDetail._lockDuration) {
@@ -150,15 +156,15 @@ contract PrivateSaleAndVesting is Context, Ownable {
 
     require(
       (block.timestamp >= vestingDetail._withdrawalTime),
-      "VeFiTokenVest: It is not time for withdrawal"
+      'VeFiTokenVest: It is not time for withdrawal'
     );
     require(
       _paymentToken.balanceOf(address(this)) >= _withdrawable,
-      "VeFiTokenVest: Not enough tokens to sell. Please reach out to the foundation concerning this"
+      'VeFiTokenVest: Not enough tokens to sell. Please reach out to the foundation concerning this'
     );
     require(
       _paymentToken.transfer(_msgSender(), _withdrawable),
-      "VeFiTokenVest: Could not transfer tokens"
+      'VeFiTokenVest: Could not transfer tokens'
     );
 
     vestingDetail._withdrawalAmount =
@@ -188,7 +194,7 @@ contract PrivateSaleAndVesting is Context, Ownable {
     for (uint256 i = 0; i < _accounts.length; i++) {
       require(
         _accounts[i] != address(0),
-        "VeFiTokenVest: Cannot whitelist a zero address"
+        'VeFiTokenVest: Cannot whitelist a zero address'
       );
       _whiteListed[_accounts[i]] = true;
     }
@@ -208,18 +214,18 @@ contract PrivateSaleAndVesting is Context, Ownable {
   function withdrawLeftOverTokens() external onlyFoundationAddress {
     require(
       block.timestamp >= _endTime,
-      "VeFiTokenVest: Left over tokens can only be withdrawn after sale"
+      'VeFiTokenVest: Left over tokens can only be withdrawn after sale'
     );
     require(
       _paymentToken.balanceOf(address(this)) > 0,
-      "VeFiTokenVest: No left over tokens to withdraw"
+      'VeFiTokenVest: No left over tokens to withdraw'
     );
     require(
       _paymentToken.transfer(
         _foundationAddress,
         _paymentToken.balanceOf(address(this))
       ),
-      "VeFiTokenVest: Could not withdraw left over tokens"
+      'VeFiTokenVest: Could not withdraw left over tokens'
     );
   }
 
@@ -227,7 +233,7 @@ contract PrivateSaleAndVesting is Context, Ownable {
    *  @param rate_ The rate to be set
    */
   function setRate(uint256 rate_) external onlyFoundationAddress {
-    require(rate_ > 0, "VeFiTokenVest: Rate must be greater than 0");
+    require(rate_ > 0, 'VeFiTokenVest: Rate must be greater than 0');
     _rate = rate_;
 
     emit RateChanged(_rate);
@@ -242,7 +248,7 @@ contract PrivateSaleAndVesting is Context, Ownable {
   {
     require(
       foundationAddress_ != address(0),
-      "VeFiTokenVest: Set zero address as foundation address"
+      'VeFiTokenVest: Set zero address as foundation address'
     );
     _foundationAddress = foundationAddress_;
   }
