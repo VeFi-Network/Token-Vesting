@@ -102,7 +102,7 @@ contract SeedSaleAndVesting is Context, Ownable {
     uint256 _vestable = (msg.value * 10**18) / _rate;
 
     require(
-      (_totalVested + _vestable) <= _paymentToken.balanceOf(address(this)),
+      (_totalVested + _vestable) <= getAvailableTokens(),
       'VeFiTokenVest: Cannot buy and vest as allocation is not enough'
     );
 
@@ -149,7 +149,7 @@ contract SeedSaleAndVesting is Context, Ownable {
       'VeFiTokenVest: It is not time for withdrawal'
     );
     require(
-      _paymentToken.balanceOf(address(this)) >= _withdrawable,
+      getAvailableTokens() >= _withdrawable,
       'VeFiTokenVest: Not enough tokens to sell. Please reach out to the foundation concerning this'
     );
     require(
@@ -271,6 +271,12 @@ contract SeedSaleAndVesting is Context, Ownable {
    */
   function getTokensBought() external view returns (uint256) {
     return _tokensBought;
+  }
+
+  /** @dev Returns the amount of tokens available
+   */
+  function getAvailableTokens() public view returns (uint256) {
+    return _paymentToken.balanceOf(address(this));
   }
 
   receive() external payable {
