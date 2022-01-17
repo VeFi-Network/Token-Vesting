@@ -107,6 +107,10 @@ contract PrivateSaleAndVesting is Context, Ownable {
       'VeFiTokenVest: Sale not started yet'
     );
     require(_endTime > _currentTime, 'VeFiTokenVest: Sale has ended');
+    require(
+      msg.value >= 2 ether,
+      'VeFiTokenVest: Must deposit at least 2 ether'
+    );
 
     address _vestor = _msgSender();
     uint256 _vestable = (msg.value * 10**18) / _rate;

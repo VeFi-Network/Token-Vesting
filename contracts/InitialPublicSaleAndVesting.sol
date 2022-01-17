@@ -4,7 +4,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 
-contract SeedSaleAndVesting is Context, Ownable {
+contract InitialPublicSaleAndVesting is Context, Ownable {
   struct VestingDetail {
     uint256 _withdrawalTime;
     uint256 _withdrawalAmount;

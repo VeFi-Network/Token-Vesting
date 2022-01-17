@@ -1,7 +1,7 @@
 const { expectRevert, time } = require('@openzeppelin/test-helpers');
 const BigNumber = web3.BigNumber;
 const MockToken = artifacts.require('MockToken');
-const SeedSaleAndVesting = artifacts.require('SeedSaleAndVesting');
+const SeedSaleAndVesting = artifacts.require('InitialPublicSaleAndVesting');
 const PrivateSaleAndVesting = artifacts.require('PrivateSaleAndVesting');
 const BN = require('bignumber.js');
 
@@ -10,7 +10,7 @@ require('chai')
   .use(require('chai-bignumber')(BigNumber))
   .should();
 
-contract('SeedSaleAndVesting', accounts => {
+contract('InitialPublicSaleAndVesting', accounts => {
   let seedSale;
   let token;
   const daysBeforeStart = 21;
@@ -203,7 +203,7 @@ contract('PrivateSaleAndVesting', accounts => {
     await expectRevert(
       privateSale.buyAndVest({
         from: beneficiary3,
-        value: web3.utils.toWei('0.000002')
+        value: web3.utils.toWei('2')
       }),
       'VeFiTokenVest: Only whitelisted addresses can call this function'
     );
@@ -215,12 +215,22 @@ contract('PrivateSaleAndVesting', accounts => {
     });
   });
 
+  it('should not permit deposit of less than 2 ether', async () => {
+    await expectRevert(
+      privateSale.buyAndVest({
+        from: beneficiary3,
+        value: web3.utils.toWei('0.0002')
+      }),
+      'VeFiTokenVest: Must deposit at least 2 ether'
+    );
+  });
+
   it('should allow whitelisted address to buy and vest', async () => {
     await privateSale.buyAndVest({
       from: beneficiary3,
-      value: web3.utils.toWei('0.000002')
+      value: web3.utils.toWei('2')
     });
     const vestingDetail = await privateSale.getVestingDetail(beneficiary3);
-    vestingDetail._withdrawalAmount.toString().should.be.bignumber.equal(1e16);
+    vestingDetail._withdrawalAmount.toString().should.be.bignumber.equal(1e22);
   });
 });
