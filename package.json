@@ -8,7 +8,9 @@
   },
   "scripts": {
     "test": "truffle test --network development",
-    "format": "prettier --write **/**/*.{js,json,sol}"
+    "format": "prettier --write **/**/*.{js,json,sol}",
+    "deploy": "truffle migrate --network bsc_mainnet",
+    "flatten": "truffle-flattener contracts/PrivateSaleAndVesting.sol > PrivateSaleAndVestingFlat.sol && truffle-flattener contracts/InitialPublicSaleAndVesting.sol > InitialPublicSaleAndVestingFlat.sol"
   },
   "repository": {
     "type": "git",

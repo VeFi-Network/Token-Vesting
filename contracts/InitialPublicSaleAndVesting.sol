@@ -4,7 +4,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 
-contract PublicSaleAndVesting is Context, Ownable {
+contract InitialPublicSaleAndVesting is Context, Ownable {
   struct VestingDetail {
     uint256 _withdrawalTime;
     uint256 _withdrawalAmount;
@@ -76,10 +76,13 @@ contract PublicSaleAndVesting is Context, Ownable {
     onlyFoundationAddress
   {
     require(
-      block.timestamp >= _startTime,
+      _startTime != 0 && block.timestamp >= _startTime,
       'VeFiTokenVest: Sale must be started before the end date can be extended'
     );
-    _endTime = _endTime + (_daysToExtendSaleBy * 1 days);
+
+    if (_endTime < block.timestamp)
+      _endTime = block.timestamp + (_daysToExtendSaleBy * 1 days);
+    else _endTime = _endTime + (_daysToExtendSaleBy * 1 days);
 
     emit TokenSaleExtended(_daysToExtendSaleBy);
   }
@@ -89,14 +92,17 @@ contract PublicSaleAndVesting is Context, Ownable {
   function buyAndVest() public payable {
     uint256 _currentTime = block.timestamp;
 
-    require(_currentTime >= _startTime, 'VeFiTokenVest: Sale not started yet');
+    require(
+      _startTime != 0 && _currentTime >= _startTime,
+      'VeFiTokenVest: Sale not started yet'
+    );
     require(_endTime > _currentTime, 'VeFiTokenVest: Sale has ended');
 
     address _vestor = _msgSender();
     uint256 _vestable = (msg.value * 10**18) / _rate;
 
     require(
-      (_totalVested + _vestable) <= _paymentToken.balanceOf(address(this)),
+      (_totalVested + _vestable) <= getAvailableTokens(),
       'VeFiTokenVest: Cannot buy and vest as allocation is not enough'
     );
 
@@ -143,7 +149,7 @@ contract PublicSaleAndVesting is Context, Ownable {
       'VeFiTokenVest: It is not time for withdrawal'
     );
     require(
-      _paymentToken.balanceOf(address(this)) >= _withdrawable,
+      getAvailableTokens() >= _withdrawable,
       'VeFiTokenVest: Not enough tokens to sell. Please reach out to the foundation concerning this'
     );
     require(
@@ -265,6 +271,12 @@ contract PublicSaleAndVesting is Context, Ownable {
    */
   function getTokensBought() external view returns (uint256) {
     return _tokensBought;
+  }
+
+  /** @dev Returns the amount of tokens available
+   */
+  function getAvailableTokens() public view returns (uint256) {
+    return _paymentToken.balanceOf(address(this));
   }
 
   receive() external payable {

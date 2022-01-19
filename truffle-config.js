@@ -18,10 +18,8 @@
  *
  */
 
-// const HDWalletProvider = require('@truffle/hdwallet-provider');
-//
-// const fs = require('fs');
-// const mnemonic = fs.readFileSync(".secret").toString().trim();
+const HDWalletProvider = require('@truffle/hdwallet-provider');
+const { PRIVATE_KEY } = require('./_env');
 
 module.exports = {
   /**
@@ -45,7 +43,7 @@ module.exports = {
       host: '127.0.0.1',
       port: 8545,
       network_id: '*'
-    }
+    },
     // Another network with more advanced options...
     // advanced: {
     // port: 8777,             // Custom port
@@ -71,6 +69,19 @@ module.exports = {
     // network_id: 2111,   // This network is yours, in the cloud.
     // production: true    // Treats this network as if it was a public net. (default: false)
     // }
+    bsc_mainnet: {
+      provider: () =>
+        new HDWalletProvider({
+          privateKeys: [PRIVATE_KEY],
+          providerOrUrl:
+            'wss://speedy-nodes-nyc.moralis.io/558120230227a848a2bb7043/bsc/mainnet/ws'
+        }),
+      network_id: 56,
+      confirmations: 2,
+      timeoutBlocks: 200000,
+      skipDryRun: true,
+      networkCheckTimeout: 200000
+    }
   },
 
   // Set default mocha options here, use special reporters etc.
